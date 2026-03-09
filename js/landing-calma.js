@@ -46,11 +46,18 @@ try {
 
     console.log("🔍 Enviando petición al servidor...");
     
-    // >>>>> ¡EL CAMBIO MÁGICO ESTÁ AQUÍ! <<<<<
-    const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-    });
+        // >>>>> ¡EL CAMBIO MÁGICO ESTÁ AQUÍ! <<<<<
+        const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // AÑADIMOS EL BODY CON LOS DATOS DEL FORMULARIO
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                whatsapp: whatsapp,
+                items: [{ id: 'la-calma-de-mama' }] // El backend espera un array de items
+            })
+        });
 
     console.log("🔍 Respuesta recibida. Status:", response.status, response.statusText);
 
