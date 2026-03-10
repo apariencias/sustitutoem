@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // >>>>> ¡URL CORREGIDA Y BODY SIN ID DE PRODUCTO! <<<<<
                 // El backend está configurado para un solo producto, no necesita un ID.
-                const response = await fetch('https://servidor-pagos.onrender.com/create-checkout-session', {
+                const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
