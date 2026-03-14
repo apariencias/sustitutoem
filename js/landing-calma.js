@@ -30,19 +30,46 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 console.log('Enviando datos al servidor:', { name, email, whatsapp });
                 
-                // >>>>> ¡URL CORRECTA Y BODY CON DATOS! <<<<<
-const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+                // >>>>> ¡BLOQUE DE PAGO CORREGIDO Y ROBUSTO! <<<<<
+
+try {
+    // 1. Define el priceId aquí (¡RECUERDA PONER EL TUYO!)
+    const priceId = 'price_1SJkrS49pVvXIqagmqSmEOtf'; // <--- ¡REEMPLAZA ESTO CON TU ID REAL!
+
+    // 2. Crea el objeto con todos los datos
+    const dataToSend = {
         name: name,
         email: email,
         whatsapp: whatsapp,
-        priceId: 'price_1SJkrS49pVvXIqagmqSmEOtf' // <--- ¡PEGA AQUÍ TU ID DE PRECIO!
-    }),
-});
+        priceId: priceId // Añadimos el priceId
+    };
+
+    console.log('Enviando datos al servidor:', dataToSend);
+
+    // 3. Realiza la llamada al servidor
+    const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend),
+    });
+
+    // 4. Maneja la respuesta
+    if (!response.ok) {
+        const errorData = await response.json(); // Intenta obtener más detalles del error
+        throw new Error(errorData.message || 'Error del servidor al crear la sesión de pago.');
+    }
+
+    const session = await response.json();
+
+    // 5. Redirige a Stripe
+    window.location.href = session.url;
+
+} catch (error) {
+    console.error('❌ ERROR en el navegador:', error);
+    alert(error.message);
+}
 
                 // 5. Manejamos la respuesta del servidor
                 if (!response.ok) {
