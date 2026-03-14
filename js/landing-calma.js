@@ -1,4 +1,4 @@
-// js/landing-calma.js (VERSIÓN FINAL LIMPIA)
+// js/landing-calma.js (VERSIÓN CORREGIDA Y DEFINITIVA)
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Lógica del Formulario y Stripe ---
@@ -26,68 +26,50 @@ document.addEventListener('DOMContentLoaded', () => {
             submitButton.disabled = true;
             submitButton.innerText = 'Procesando pago...';
 
-            // 4. Conectamos con el backend
+            // 4. Conectamos con el backend (Bloque try/catch único y corregido)
             try {
-                console.log('Enviando datos al servidor:', { name, email, whatsapp });
-                
-                // >>>>> ¡BLOQUE DE PAGO CORREGIDO Y ROBUSTO! <<<<<
+                // Define el priceId aquí (¡ASEGÚRATE DE QUE SEA EL CORRECTO!)
+                const priceId = 'price_1SJkrS49pVvXIqagmqSmEOtf';
 
-try {
-    // 1. Define el priceId aquí (¡RECUERDA PONER EL TUYO!)
-    const priceId = 'price_1SJkrS49pVvXIqagmqSmEOtf'; // <--- ¡REEMPLAZA ESTO CON TU ID REAL!
+                // Crea el objeto con todos los datos que se enviarán
+                const dataToSend = {
+                    name: name,
+                    email: email,
+                    whatsapp: whatsapp,
+                    priceId: priceId // <-- Este es el cambio clave
+                };
 
-    // 2. Crea el objeto con todos los datos
-    const dataToSend = {
-        name: name,
-        email: email,
-        whatsapp: whatsapp,
-        priceId: priceId // Añadimos el priceId
-    };
+                console.log('Enviando datos al servidor:', dataToSend);
 
-    console.log('Enviando datos al servidor:', dataToSend);
+                // Realiza la llamada al servidor
+                const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToSend),
+                });
 
-    // 3. Realiza la llamada al servidor
-    const response = await fetch('https://servidor-pagos.onrender.com/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToSend),
-    });
-
-    // 4. Maneja la respuesta
-    if (!response.ok) {
-        const errorData = await response.json(); // Intenta obtener más detalles del error
-        throw new Error(errorData.message || 'Error del servidor al crear la sesión de pago.');
-    }
-
-    const session = await response.json();
-
-    // 5. Redirige a Stripe
-    window.location.href = session.url;
-
-} catch (error) {
-    console.error('❌ ERROR en el navegador:', error);
-    alert(error.message);
-}
-
-                // 5. Manejamos la respuesta del servidor
+                // Si el servidor responde con un error (400, 500, etc.)
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Error del servidor al crear la sesión de pago.');
+                    const errorText = await response.text(); // Leemos el error como texto
+                    console.error('Error del servidor (Status:', response.status, '):', errorText);
+                    throw new Error('El servidor no pudo procesar el pago. Revisa la consola para más detalles.');
                 }
 
+                // Si todo va bien, obtenemos la URL de Stripe
                 const session = await response.json();
                 console.log("Sesión de Stripe creada. Redirigiendo a:", session.url);
 
-                // 6. Redirigimos al cliente a la página de pago de Stripe
+                // Redirigimos al cliente a la página de pago de Stripe
                 window.location.href = session.url;
 
             } catch (error) {
+                // Si ocurre cualquier error en el proceso
                 console.error('❌ ERROR en el navegador:', error);
-                alert(`Hubo un error al procesar el pago: ${error.message}. Por favor, intenta de nuevo o contáctanos por WhatsApp.`);
+                alert(`Hubo un error: ${error.message}. Por favor, intenta de nuevo.`);
                 
-                // 7. En caso de error, reactivamos el botón
+                // 5. En caso de error, reactivamos el botón
                 submitButton.disabled = false;
                 submitButton.innerText = originalButtonText;
             }
