@@ -27,14 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const PRICE_ID = 'price_1TB01m49pVvXIqaguJHNWTsQ'; // <--- PARECE CORRECTO, VÉRIFICALO
 
             try {
-                // La URL de tu API local
-                const response = await fetch('/.netlify/functions/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ customer_email: email }),
-                });
+                // CÓDIGO CORREGIDO
+const response = await fetch('/.netlify/functions/create-checkout-session', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        priceId: PRICE_ID,        // <-- 1. AÑADIMOS EL PRICE ID
+        customerEmail: email      // <-- 2. CORREGIMOS EL NOMBRE DE LA CLAVE
+    }),
+});
 
                 if (!response.ok) {
                     throw new Error(`Error del servidor: ${response.statusText}`);
