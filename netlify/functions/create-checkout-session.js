@@ -1,53 +1,46 @@
 // netlify/functions/create-checkout-session.js
-
-// 1. Importa las librerías necesarias
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// 2. Este es el "manejador" de la función. Siempre se llama así.
-exports.handler = async (event) => {
-  try {
-    // 3. Netlify Functions no usan Express. El cuerpo de la petición
-    //    viene en el objeto 'event'. Hay que parsearlo manualmente.
-    const { priceId, customerEmail } = JSON.parse(event.body);
+// Lista de precios permitidos para este producto. ¡Esto evita que manipulen el precio!
+const ALLOWED_PRICE_IDS = [
+    'price_1TB01m49pVvXIqaguJHNWTsQ' // Pega aquí tu ID de precio real
+];
 
-    if (!priceId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Price ID is required.' }),
-      };
+exports.handler = async (event) => {
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    // 4. La lógica de Stripe es casi idéntica.
-    const session = await stripe.checkout.sessions.create({
-      customer_email: customerEmail,
-      billing_address_collection: 'required',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CANCEL_URL}`,
-    });
+    try {
+        const { customerEmail } = JSON.parse(event.body);
 
-    // 5. Las respuestas de Netlify Functions deben tener este formato.
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', // Permite llamadas desde cualquier origen
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: JSON.stringify({ url: session.url }),
-    };
+        // Usamos el primer (y único) precio de nuestra lista de permitidos.
+        const priceId = ALLOWED_PRICE_IDS[0];
 
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
-    };
-  }
+        const session = await stripe.checkout.sessions.create({
+            customer_email: customerEmail,
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url: `${process.env.SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: process.env.CANCEL_URL,
+        });
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ url: session.url }),
+        };
+
+    } catch (error) {
+        console.error("Error al crear la sesión de Stripe:", error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Internal Server Error' }),
+        };
+    }
 };
